@@ -24,10 +24,12 @@ library
                      Handler.Home
                      Handler.Comment
                      Handler.Profile
+                     Userx
+                     Company
 
     if flag(dev) || flag(library-only)
         cpp-options:   -DDEVELOPMENT
-        ghc-options:   -Wall -fwarn-tabs -O0
+        ghc-options:   -Wall -fwarn-tabs -O0 -fwarn-incomplete-patterns
     else
         ghc-options:   -Wall -fwarn-tabs -O2
 
@@ -93,6 +95,7 @@ library
                  , time
                  , case-insensitive
                  , wai
+                 , sqlite-simple
 
 executable         yesodlek
     if flag(library-only)
