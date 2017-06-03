@@ -27,17 +27,22 @@ data FileForm = FileForm
 -- The majority of the code you will write in Yesod lives in these handler
 -- functions. You can spread them across multiple files if you are so
 -- inclined, or create a single monolithic file.
-getHomeR :: Handler Html
+
+-- getHomeR :: Handler Html
+-- getHomeR = do
+--     (formWidget, formEnctype) <- generateFormPost sampleForm
+--     let submission = Nothing :: Maybe FileForm
+--         handlerName = "getHomeR" :: Text
+--     defaultLayout $ do
+--         let (commentFormId, commentTextareaId, commentListId) = commentIds
+--         aDomId <- newIdent
+--         setTitle "Welcome To Yesod!"
+--         $(widgetFile "homepage")
+
+getHomeR :: Handler Value
 getHomeR = do
-    liftIO someFunc
-    (formWidget, formEnctype) <- generateFormPost sampleForm
-    let submission = Nothing :: Maybe FileForm
-        handlerName = "getHomeR" :: Text
-    defaultLayout $ do
-        let (commentFormId, commentTextareaId, commentListId) = commentIds
-        aDomId <- newIdent
-        setTitle "Welcome To Yesod!"
-        $(widgetFile "homepage")
+  users <- liftIO getUsers
+  returnJson users
 
 postHomeR :: Handler Html
 postHomeR = do
@@ -99,14 +104,17 @@ insertUserxs conn = mapM_ insertUserx
       cN user = Company.name $ Userx.company user
       cF user = Company.catchPhrase $ Userx.company user
 
-someFunc :: IO ()
-someFunc = do
+getUsers :: IO [Userx]
+getUsers = do
   rsp <- httpLBS "http://jsonplaceholder.typicode.com/users"
   conn <- open "db/test.db"
-  didInsert <- CE.try $ insertUserxs conn . toUsers $ getResponseBody rsp :: IO (Either SQLError ())
+  execute_ conn "DELETE FROM users"
+  let body = getResponseBody rsp
+  let users = toUsers body
+  didInsert <- CE.try $ insertUserxs conn users :: IO (Either SQLError ())
   case didInsert of
     Left ex -> putStrLn . T.pack $ "Caught exception: " ++ show ex
     Right _ -> print ("ok" :: Text)
   r <- query_ conn "SELECT * from users" :: IO [Userx]
-  mapM_ print r
   close conn
+  return r
